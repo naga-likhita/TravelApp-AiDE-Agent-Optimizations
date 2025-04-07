@@ -32,6 +32,25 @@ public class TravelDbContext : DbContext
         modelBuilder.Entity<Booking>()
             .Property(b => b.Status)
             .HasConversion<string>();
+
+        // Index configurations
+        modelBuilder.Entity<Flight>()
+            .HasIndex(f => new { f.Departure, f.Destination });
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Country);
+
+        // PhoneNumber index without included columns due to EF Core version constraints
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.PhoneNumber);
+
+        modelBuilder.Entity<Booking>()
+            .HasIndex(b => b.UserId);
+
         base.OnModelCreating(modelBuilder);
     }
     public void MockDynamic()
