@@ -40,9 +40,16 @@ public class TravelRepo(TravelDbContext context, IMemoryCache cache)
     /// Large results as there will be many bookings in system
     /// </summary>
     /// <returns></returns>
-    public async Task<List<Booking>> GetBookings()
+    public async Task<(List<Booking> Results, int TotalCount, int TotalPages)> GetBookings(int pageNumber = 1, int pageSize = 50)
     {
-        return await context.Bookings.AsNoTracking().ToListAsync();
+        var query = context.Bookings.AsNoTracking().OrderBy(b => b.Id);
+        var totalCount = await query.CountAsync();
+        var results = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (results, totalCount, (int)Math.Ceiling(totalCount / (double)pageSize));
     }
 
     public async Task<List<Booking>> GetBookingsForUser(string userPhoneNum)
