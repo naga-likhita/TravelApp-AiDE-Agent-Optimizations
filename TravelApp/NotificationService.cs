@@ -1,4 +1,4 @@
-﻿﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using TravelApp.Entities;
 using Microsoft.Extensions.Caching.Memory;
@@ -57,7 +57,7 @@ public class NotificationService
             })
             .ToListAsync();
 
-        foreach (var booking in bookings)
+        var notificationTasks = bookings.Select(booking =>
         {
             string message = $"Reminder: You have a booking for flight {booking.FlightFlightNumber} on {booking.FlightScheduledDepartureTime}.";
             var user = new User
@@ -66,22 +66,24 @@ public class NotificationService
                 PhoneNumber = booking.UserPhoneNumber,
                 Id = booking.UserId
             };
-            var resp = await SendNotificationAsync(user, message);
-        }
+            return SendNotificationAsync(user, message);
+        }).ToArray();
+
+        await Task.WhenAll(notificationTasks);
     }
 
     public async Task<SendNotificationResponse> SendNotificationAsync(User user, string message)
     {
-var correlationId = _httpContextAccessor.HttpContext?.Request.Headers["X-Correlation-ID"].FirstOrDefault() ?? Guid.NewGuid().ToString();
-_httpClient.DefaultRequestHeaders.Add("X-Correlation-ID", correlationId);
+        var correlationId = _httpContextAccessor.HttpContext?.Request.Headers["X-Correlation-ID"].FirstOrDefault() ?? Guid.NewGuid().ToString();
+        _httpClient.DefaultRequestHeaders.Add("X-Correlation-ID", correlationId);
 
-var httpResp = await _httpClient.PostAsJsonAsync("/api/Notification", new SendNotificationRequest
-{
-    Email = user.Email,
-    PhoneNumber = user.PhoneNumber,
-    Message = message,
-    UserId = user.Id
-});
+        var httpResp = await _httpClient.PostAsJsonAsync("/api/Notification", new SendNotificationRequest
+        {
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            Message = message,
+            UserId = user.Id
+        });
 
         var responseDto = await httpResp.Content.ReadFromJsonAsync<SendNotificationResponse>();
         return responseDto;
