@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TravelApp;
 
-TravelDbContext.Instance.Export();
+TravelDbContext.Instance.Import();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();

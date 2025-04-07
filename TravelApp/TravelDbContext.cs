@@ -11,7 +11,7 @@ public class TravelDbContext : DbContext
     {
 
     }
-    public static string DbPath => $"Data Source=D:\\TravelOldDb.db";
+    public static string DbPath => $"Data Source=D:\\TravelDb_FatBrain.db";
 
     public static TravelDbContext Instance
     {
