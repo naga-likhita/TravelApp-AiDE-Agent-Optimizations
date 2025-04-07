@@ -55,9 +55,23 @@ public class TravelRepo(TravelDbContext context, IMemoryCache memoryCache)
     /// Large results as there will be many bookings in system
     /// </summary>
     /// <returns></returns>
-    public async Task<List<Booking>> GetBookings()
+    public async Task<PaginatedBookingsDto> GetBookings(int pageNumber, int pageSize)
     {
-        return await context.Bookings.AsNoTracking().ToListAsync();
+        var totalItems = await context.Bookings.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var bookings = await context.Bookings
+            .AsNoTracking()
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedBookingsDto
+        {
+            Bookings = bookings,
+            TotalItems = totalItems,
+            TotalPages = totalPages
+        };
     }
 
     public async Task<List<Booking>> GetBookingsForUser(string userPhoneNum)
