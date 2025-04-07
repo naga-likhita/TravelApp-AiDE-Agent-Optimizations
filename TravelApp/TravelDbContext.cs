@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿﻿using Microsoft.EntityFrameworkCore;
+using MessagePack;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using TravelApp.Entities;
 using TravelApp.Mock;
 
@@ -56,7 +58,7 @@ public class TravelDbContext : DbContext
         if (isNewlyCreated is false)
             throw new Exception("DB Already mocked!!");
 
-        var users = JsonSerializer.Deserialize<User[]>(File.ReadAllText("Mock/Users.json"));
+        var users = MessagePackSerializer.Deserialize<User[]>(File.ReadAllBytes("Mock/Users.json"));
         Users.AddRange(users);
         SaveChanges();
 
@@ -69,7 +71,7 @@ public class TravelDbContext : DbContext
         if (isNewlyCreated is false)
             throw new Exception("DB Already mocked!!");
 
-        var users = JsonSerializer.Deserialize<User[]>(File.ReadAllText("Mock/Users.json"));
+        var users = MessagePackSerializer.Deserialize<User[]>(File.ReadAllBytes("Mock/Users.json"));
         var flights = JsonSerializer.Deserialize<Flight[]>(File.ReadAllText("Mock/Flights.json"));
         var bookings = JsonSerializer.Deserialize<Booking[]>(File.ReadAllText("Mock/Bookings.json"));
 
@@ -82,12 +84,12 @@ public class TravelDbContext : DbContext
 
     public void Export()
     {
-        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
-        {
-            WriteIndented = true
-        };
-        File.WriteAllText("Mock/Users.json", JsonSerializer.Serialize(Users.ToList(), jsonOptions));
-        File.WriteAllText("Mock/Flights.json", JsonSerializer.Serialize(Flights.ToList(), jsonOptions));
-        File.WriteAllText("Mock/Bookings.json", JsonSerializer.Serialize(Bookings.ToList(), jsonOptions));
+        var users = Users.ToList();
+        var flights = Flights.ToList();
+        var bookings = Bookings.ToList();
+
+        File.WriteAllBytes("Mock/Users.json", MessagePackSerializer.Serialize(users));
+        File.WriteAllText("Mock/Flights.json", JsonSerializer.Serialize(flights, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText("Mock/Bookings.json", JsonSerializer.Serialize(bookings, new JsonSerializerOptions { WriteIndented = true }));
     }
 }
