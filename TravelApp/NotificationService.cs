@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Shared.Models;
+using TravelApp.DTOs;
 using TravelApp.Entities;
 
 namespace TravelApp;
@@ -23,9 +24,22 @@ public class NotificationService
             .FirstOrDefault();
 
         var bookings = await TravelDbContext.Instance.Bookings
-            .Include(b => b.User)
-            .Include(b => b.Flight)
             .Where(b => b.TravelDate == topBookingDate.TravelDate)
+            .Select(b => new
+            {
+                User = new NotificationUserDto
+                {
+                    Email = b.User.Email,
+                    PhoneNumber = b.User.PhoneNumber,
+                    Id = b.User.Id
+                },
+                Flight = new
+                {
+                    b.Flight.FlightNumber,
+                    b.Flight.ScheduledDepartureTime
+                }
+            })
+            .AsNoTracking()
             .ToListAsync();
 
         foreach (var booking in bookings)
@@ -38,7 +52,9 @@ public class NotificationService
         }
     }
 
-    public async Task<SendNotificationResponse> SendNotificationAsync(User user, string message)
+    public async Task<SendNotificationResponse> SendNotificationAsync(
+        NotificationUserDto user,
+        string message)
     {
         var httpResp = await _httpClient.PostAsJsonAsync("/api/Notification", new SendNotificationRequest
         {

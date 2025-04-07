@@ -22,8 +22,10 @@ public class TravelRepo(TravelDbContext context)
 
     public async Task<decimal> GetFlightSpeedAsync(int flightId)
     {
-        var flight = await context.Flights.FirstAsync(f => f.Id == flightId);
-        return flight.Speed;
+        return await context.Flights
+            .Where(f => f.Id == flightId)
+            .Select(f => f.Speed)
+            .FirstAsync(); // Already optimized - no full entity load
     }
 
     /// <summary>
@@ -57,12 +59,14 @@ public class TravelRepo(TravelDbContext context)
 
     public async Task<UserInfoDto[]> GetUsersByCountry(string country)
     {
-        var users = await context.Users.Where(u => u.Country == country).ToListAsync();
-        return users.Select(u => new UserInfoDto
-        {
-            Name = u.Name,
-            Email = u.Email,
-        }).ToArray();
+        return await context.Users
+            .Where(u => u.Country == country)
+            .Select(u => new UserInfoDto
+            {
+                Name = u.Name,
+                Email = u.Email,
+            })
+            .ToArrayAsync();
     }
 
     public async Task<bool> UpdateUserInfo(int userId, string name, string email)
