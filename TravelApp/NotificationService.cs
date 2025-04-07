@@ -10,6 +10,7 @@ public class NotificationService
     {
         BaseAddress = new Uri("https://localhost:7226")
     };
+
     public async Task ReminderUsersAsync()
     {
         var topBookingDate = TravelDbContext.Instance.Bookings
@@ -23,18 +24,28 @@ public class NotificationService
             .FirstOrDefault();
 
         var bookings = await TravelDbContext.Instance.Bookings
-            .Include(b => b.User)
-            .Include(b => b.Flight)
             .Where(b => b.TravelDate == topBookingDate.TravelDate)
+            .Select(b => new
+            {
+                UserId = b.UserId,
+                TravelDate = b.TravelDate,
+                UserEmail = b.User.Email,
+                UserPhoneNumber = b.User.PhoneNumber,
+                FlightFlightNumber = b.Flight.FlightNumber,
+                FlightScheduledDepartureTime = b.Flight.ScheduledDepartureTime
+            })
             .ToListAsync();
 
         foreach (var booking in bookings)
         {
-            if (booking.User != null)
+            string message = $"Reminder: You have a booking for flight {booking.FlightFlightNumber} on {booking.FlightScheduledDepartureTime}.";
+            var user = new User
             {
-                string message = $"Reminder: You have a booking for flight {booking.Flight.FlightNumber} on {booking.Flight.ScheduledDepartureTime}.";
-                var resp = await SendNotificationAsync(booking.User, message);
-            }
+                Email = booking.UserEmail,
+                PhoneNumber = booking.UserPhoneNumber,
+                Id = booking.UserId
+            };
+            var resp = await SendNotificationAsync(user, message);
         }
     }
 
