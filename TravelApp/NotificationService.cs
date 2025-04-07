@@ -53,15 +53,17 @@ public class NotificationService
             .AsNoTracking()
             .ToListAsync();
 
-        foreach (var booking in bookings)
-        {
-            if (booking.User != null)
+        var notificationTasks = bookings
+            .Where(booking => booking.User != null)
+            .Select(booking =>
             {
                 string message = $"Reminder: You have a booking for flight {booking.Flight.FlightNumber} on {booking.Flight.ScheduledDepartureTime}.";
-                var resp = await SendNotificationAsync(booking.User, message);
-            }
-        }
+                return SendNotificationAsync(booking.User, message);
+            });
+
+        await Task.WhenAll(notificationTasks);
     }
+
 
     public async Task<SendNotificationResponse> SendNotificationAsync(
         NotificationUserDto user,
