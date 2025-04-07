@@ -1,4 +1,6 @@
-﻿using TravelApp.Entities;
+﻿using System.Collections.Generic;
+using System.Linq;
+using TravelApp.Entities;
 
 namespace TravelApp;
 
@@ -6,53 +8,27 @@ public class AnalyticsService
 {
     public List<string> GetTop5Destinations(List<Booking> bookings)
     {
-        var destinations = new List<string>();
+        var destinationCounts = new Dictionary<string, int>();
 
         foreach (var booking in bookings)
         {
-            destinations.Add(booking.Flight.Destination);
-        }
-
-        var topDestinations = new List<string>();
-
-        foreach (var dest in destinations)
-        {
-            int count = 0;
-
-            foreach (var d in destinations)
+            string destination = booking.Flight.Destination;
+            if (destinationCounts.ContainsKey(destination))
             {
-                if (d == dest)
-                    count++;
+                destinationCounts[destination]++;
             }
-
-            if (!topDestinations.Contains(dest))
+            else
             {
-                int insertIndex = 0;
-                while (insertIndex < topDestinations.Count &&
-                       CountOccurrences(topDestinations[insertIndex], destinations) > count)
-                {
-                    insertIndex++;
-                }
-
-                topDestinations.Insert(insertIndex, dest);
-                if (topDestinations.Count > 5)
-                {
-                    topDestinations.RemoveAt(topDestinations.Count - 1);
-                }
+                destinationCounts[destination] = 1;
             }
         }
+
+        var topDestinations = destinationCounts
+            .OrderByDescending(pair => pair.Value)
+            .Take(5)
+            .Select(pair => pair.Key)
+            .ToList();
 
         return topDestinations;
-    }
-
-    private int CountOccurrences(string value, List<string> list)
-    {
-        int count = 0;
-        foreach (var item in list)
-        {
-            if (item == value)
-                count++;
-        }
-        return count;
     }
 }
