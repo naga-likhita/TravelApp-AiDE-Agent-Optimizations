@@ -23,6 +23,7 @@ public class TravelRepo(TravelDbContext context, IMemoryCache cache)
             entry.AbsoluteExpirationRelativeToNow = _cacheDuration;
             return await context.Flights
                 .Where(f => f.Departure == departure && f.Destination == destination)
+                .AsNoTracking()
                 .ToListAsync();
         });
     }
@@ -41,12 +42,15 @@ public class TravelRepo(TravelDbContext context, IMemoryCache cache)
     /// <returns></returns>
     public async Task<List<Booking>> GetBookings()
     {
-        return await context.Bookings.ToListAsync();
+        return await context.Bookings.AsNoTracking().ToListAsync();
     }
 
     public async Task<List<Booking>> GetBookingsForUser(string userPhoneNum)
     {
-        return await context.Bookings.Where(b => b.User.PhoneNumber == userPhoneNum).ToListAsync();
+        return await context.Bookings
+            .Where(b => b.User.PhoneNumber == userPhoneNum)
+            .AsNoTracking()
+            .ToListAsync();
     }
 
     /// <summary>
