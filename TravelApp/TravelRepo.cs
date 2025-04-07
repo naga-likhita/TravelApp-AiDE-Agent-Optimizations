@@ -24,7 +24,9 @@ public class TravelRepo(TravelDbContext context, IMemoryCache memoryCache)
 
         var flights = await context
             .Flights
-            .Where(f => f.Departure == departure && f.Destination == destination).ToListAsync();
+            .Where(f => f.Departure == departure && f.Destination == destination)
+            .AsNoTracking()
+            .ToListAsync();
 
         _memoryCache.Set(cacheKey, flights, TimeSpan.FromMinutes(10)); // Cache for 10 minutes
 
@@ -55,12 +57,12 @@ public class TravelRepo(TravelDbContext context, IMemoryCache memoryCache)
     /// <returns></returns>
     public async Task<List<Booking>> GetBookings()
     {
-        return await context.Bookings.ToListAsync();
+        return await context.Bookings.AsNoTracking().ToListAsync();
     }
 
     public async Task<List<Booking>> GetBookingsForUser(string userPhoneNum)
     {
-        return await context.Bookings.Where(b => b.User.PhoneNumber == userPhoneNum).ToListAsync();
+        return await context.Bookings.Where(b => b.User.PhoneNumber == userPhoneNum).AsNoTracking().ToListAsync();
     }
 
     /// <summary>
@@ -75,7 +77,9 @@ public class TravelRepo(TravelDbContext context, IMemoryCache memoryCache)
             {
                 Name = user.Name,
                 Email = user.Email,
-            }).FirstAsync();
+            })
+            .AsNoTracking()
+            .FirstAsync();
     }
 
     public async Task<UserInfoDto[]> GetUsersByCountry(string country)
@@ -93,6 +97,7 @@ public class TravelRepo(TravelDbContext context, IMemoryCache memoryCache)
                 Name = u.Name,
                 Email = u.Email,
             })
+            .AsNoTracking()
             .ToListAsync()).ToArray();
 
         _memoryCache.Set(cacheKey, users, TimeSpan.FromHours(1)); // Cache for 1 hour
