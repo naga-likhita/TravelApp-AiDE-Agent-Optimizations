@@ -8,10 +8,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<TravelDbContext>(o =>
+builder.Services.AddDbContextPool<TravelDbContext>(o =>
 {
     o.UseSqlite(TravelDbContext.DbPath);
-});
+}, 128);
 
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<NotificationService>();
