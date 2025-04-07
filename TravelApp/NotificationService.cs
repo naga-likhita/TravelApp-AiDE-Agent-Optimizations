@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿﻿using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using TravelApp.Entities;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.AspNetCore.Http;
 
 namespace TravelApp;
 
@@ -13,11 +14,14 @@ public class NotificationService
     };
 
     private readonly IMemoryCache _memoryCache;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public NotificationService(IMemoryCache memoryCache)
+    public NotificationService(IMemoryCache memoryCache, IHttpContextAccessor httpContextAccessor)
     {
         _memoryCache = memoryCache;
+        _httpContextAccessor = httpContextAccessor;
     }
+
 
     public async Task ReminderUsersAsync()
     {
@@ -68,13 +72,16 @@ public class NotificationService
 
     public async Task<SendNotificationResponse> SendNotificationAsync(User user, string message)
     {
-        var httpResp = await _httpClient.PostAsJsonAsync("/api/Notification", new SendNotificationRequest
-        {
-            Email = user.Email,
-            PhoneNumber = user.PhoneNumber,
-            Message = message,
-            UserId = user.Id
-        });
+var correlationId = _httpContextAccessor.HttpContext?.Request.Headers["X-Correlation-ID"].FirstOrDefault() ?? Guid.NewGuid().ToString();
+_httpClient.DefaultRequestHeaders.Add("X-Correlation-ID", correlationId);
+
+var httpResp = await _httpClient.PostAsJsonAsync("/api/Notification", new SendNotificationRequest
+{
+    Email = user.Email,
+    PhoneNumber = user.PhoneNumber,
+    Message = message,
+    UserId = user.Id
+});
 
         var responseDto = await httpResp.Content.ReadFromJsonAsync<SendNotificationResponse>();
         return responseDto;
