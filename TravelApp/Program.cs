@@ -4,6 +4,8 @@ using TravelApp;
 TravelDbContext.Instance.Import();
 
 var builder = WebApplication.CreateBuilder(args);
+// Add caching services
+builder.Services.AddMemoryCache();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Shared.Models;
 using TravelApp.DTOs;
 using TravelApp.Entities;
@@ -11,20 +12,30 @@ public class NotificationService
     {
         BaseAddress = new Uri("https://localhost:7226")
     };
+    private readonly IMemoryCache _cache;
+    private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(15);
+
+    public NotificationService(IMemoryCache cache)
+    {
+        _cache = cache;
+    }
     public async Task ReminderUsersAsync()
     {
-        var topBookingDate = TravelDbContext.Instance.Bookings
-            .GroupBy(b => b.TravelDate)
-            .Select(g => new
-            {
-                TravelDate = g.Key,
-                TotalBookings = g.Count()
-            })
-            .OrderByDescending(x => x.TotalBookings)
-            .FirstOrDefault();
+        var cacheKey = "TopTravelDate";
+        if (!_cache.TryGetValue(cacheKey, out DateOnly topTravelDate))
+        {
+            topTravelDate = TravelDbContext.Instance.Bookings
+                .GroupBy(b => b.TravelDate)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .Select(x => x.Date)
+                .FirstOrDefault();
+
+            _cache.Set(cacheKey, topTravelDate, _cacheDuration);
+        }
 
         var bookings = await TravelDbContext.Instance.Bookings
-            .Where(b => b.TravelDate == topBookingDate.TravelDate)
+            .Where(b => b.TravelDate == topTravelDate)
             .Select(b => new
             {
                 User = new NotificationUserDto

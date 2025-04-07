@@ -1,12 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using TravelApp.DTOs;
 using TravelApp.Entities;
 
 namespace TravelApp;
 
-public class TravelRepo(TravelDbContext context)
+public class TravelRepo(TravelDbContext context, IMemoryCache cache)
 {
-    public static TravelRepo Instance => new(TravelDbContext.Instance);
+    private readonly IMemoryCache _cache = cache;
+    private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(10);
+    public static TravelRepo Instance => new(TravelDbContext.Instance, new MemoryCache(new MemoryCacheOptions()));
 
     /// <summary>
     /// This API used too frequently to get list of flights
@@ -14,10 +17,14 @@ public class TravelRepo(TravelDbContext context)
     /// <returns></returns>
     public async Task<List<Flight>> GetFlightsAsync(string departure, string destination)
     {
-        return
-            await context
-            .Flights
-            .Where(f => f.Departure == departure && f.Destination == destination).ToListAsync();
+        var cacheKey = $"Flights_{departure}_{destination}";
+        return await _cache.GetOrCreateAsync(cacheKey, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = _cacheDuration;
+            return await context.Flights
+                .Where(f => f.Departure == departure && f.Destination == destination)
+                .ToListAsync();
+        });
     }
 
     public async Task<decimal> GetFlightSpeedAsync(int flightId)
@@ -49,24 +56,34 @@ public class TravelRepo(TravelDbContext context)
     /// <returns></returns>
     public async Task<UserInfoDto> GetUserInfoByEmail(string email)
     {
-        return await context.Users.Where(u => u.Email == email)
-            .Select(user => new UserInfoDto
-            {
-                Name = user.Name,
-                Email = user.Email,
-            }).FirstAsync();
+        var cacheKey = $"User_Email_{email}";
+        return await _cache.GetOrCreateAsync(cacheKey, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = _cacheDuration;
+            return await context.Users.Where(u => u.Email == email)
+                .Select(user => new UserInfoDto
+                {
+                    Name = user.Name,
+                    Email = user.Email,
+                }).FirstAsync();
+        });
     }
 
     public async Task<UserInfoDto[]> GetUsersByCountry(string country)
     {
-        return await context.Users
-            .Where(u => u.Country == country)
-            .Select(u => new UserInfoDto
-            {
-                Name = u.Name,
-                Email = u.Email,
-            })
-            .ToArrayAsync();
+        var cacheKey = $"Users_Country_{country}";
+        return await _cache.GetOrCreateAsync(cacheKey, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = _cacheDuration;
+            return await context.Users
+                .Where(u => u.Country == country)
+                .Select(u => new UserInfoDto
+                {
+                    Name = u.Name,
+                    Email = u.Email,
+                })
+                .ToArrayAsync();
+        });
     }
 
     public async Task<bool> UpdateUserInfo(int userId, string name, string email)
@@ -75,6 +92,18 @@ public class TravelRepo(TravelDbContext context)
         user.Name = name;
         user.Email = email;
         var rowsEffected = await context.SaveChangesAsync();
+
+        if (rowsEffected > 0)
+        {
+            // Invalidate all cached data for this user
+            var cachedUser = await context.Users.FindAsync(userId);
+            if (cachedUser != null)
+            {
+                _cache.Remove($"User_Email_{cachedUser.Email}");
+                _cache.Remove($"Bookings_{cachedUser.PhoneNumber}");
+                _cache.Remove($"Users_Country_{cachedUser.Country}");
+            }
+        }
         return rowsEffected > 0;
     }
 }
