@@ -1,7 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MessagePack;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using KeyAttribute = System.ComponentModel.DataAnnotations.KeyAttribute;
 
 namespace TravelApp.Entities;
 
@@ -22,15 +22,18 @@ public class User
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // Store raw MessagePack byte array as Base64 string
     [NotMapped]
-    [JsonIgnore]
     public UserPreferences Preferences
     {
-        get => string.IsNullOrEmpty(PreferencesJson) ? new UserPreferences() : JsonSerializer.Deserialize<UserPreferences>(PreferencesJson);
-        set => PreferencesJson = JsonSerializer.Serialize(value);
+        get => string.IsNullOrEmpty(PreferencesMsgPack)
+            ? new UserPreferences()
+            : MessagePackSerializer.Deserialize<UserPreferences>(Convert.FromBase64String(PreferencesMsgPack));
+
+        set => PreferencesMsgPack = Convert.ToBase64String(MessagePackSerializer.Serialize(value));
     }
 
-    public string PreferencesJson { get; set; }
+    public string PreferencesMsgPack { get; set; }
 
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }
