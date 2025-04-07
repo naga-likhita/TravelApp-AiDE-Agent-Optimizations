@@ -32,6 +32,22 @@ public class TravelDbContext : DbContext
         modelBuilder.Entity<Booking>()
             .Property(b => b.Status)
             .HasConversion<string>();
+
+        modelBuilder.Entity<Flight>()
+            .HasIndex(f => new { f.Departure, f.Destination });
+
+        modelBuilder.Entity<Flight>()
+            .HasIndex(f => f.Id);
+
+        modelBuilder.Entity<Booking>()
+            .HasIndex(b => b.User.PhoneNumber);
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email);
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Country);
+
         base.OnModelCreating(modelBuilder);
     }
     public void MockDynamic()
