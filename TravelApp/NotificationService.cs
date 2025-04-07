@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using TravelApp.Entities;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace TravelApp;
 
@@ -11,20 +12,36 @@ public class NotificationService
         BaseAddress = new Uri("https://localhost:7226")
     };
 
+    private readonly IMemoryCache _memoryCache;
+
+    public NotificationService(IMemoryCache memoryCache)
+    {
+        _memoryCache = memoryCache;
+    }
+
     public async Task ReminderUsersAsync()
     {
-        var topBookingDate = TravelDbContext.Instance.Bookings
-            .GroupBy(b => b.TravelDate)
-            .Select(g => new
-            {
-                TravelDate = g.Key,
-                TotalBookings = g.Count()
-            })
-            .OrderByDescending(x => x.TotalBookings)
-            .FirstOrDefault();
+        var cacheKeyTopBookingDate = "top_booking_date";
+
+        if (!_memoryCache.TryGetValue(cacheKeyTopBookingDate, out DateOnly topBookingDate))
+        {
+            var topBookingDateResult = TravelDbContext.Instance.Bookings
+                .GroupBy(b => b.TravelDate)
+                .Select(g => new
+                {
+                    TravelDate = g.Key,
+                    TotalBookings = g.Count()
+                })
+                .OrderByDescending(x => x.TotalBookings)
+                .FirstOrDefault();
+
+            topBookingDate = topBookingDateResult?.TravelDate ?? DateOnly.MinValue;
+
+            _memoryCache.Set(cacheKeyTopBookingDate, topBookingDate, TimeSpan.FromMinutes(10)); // Cache for 10 minutes
+        }
 
         var bookings = await TravelDbContext.Instance.Bookings
-            .Where(b => b.TravelDate == topBookingDate.TravelDate)
+    .Where(b => b.TravelDate == topBookingDate)
             .Select(b => new
             {
                 UserId = b.UserId,

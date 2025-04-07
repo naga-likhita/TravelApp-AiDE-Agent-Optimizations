@@ -1,12 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TravelApp.DTOs;
 using TravelApp.Entities;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace TravelApp;
 
-public class TravelRepo(TravelDbContext context)
+public class TravelRepo(TravelDbContext context, IMemoryCache memoryCache)
 {
-    public static TravelRepo Instance => new(TravelDbContext.Instance);
+    private readonly IMemoryCache _memoryCache = memoryCache;
+    public static TravelRepo Instance => new(TravelDbContext.Instance, new MemoryCache(new MemoryCacheOptions()));
 
     /// <summary>
     /// This API used too frequently to get list of flights
@@ -14,18 +16,37 @@ public class TravelRepo(TravelDbContext context)
     /// <returns></returns>
     public async Task<List<Flight>> GetFlightsAsync(string departure, string destination)
     {
-        return
-            await context
+        var cacheKey = $"flights_{departure}_{destination}";
+        if (_memoryCache.TryGetValue(cacheKey, out List<Flight> cachedFlights))
+        {
+            return cachedFlights;
+        }
+
+        var flights = await context
             .Flights
             .Where(f => f.Departure == departure && f.Destination == destination).ToListAsync();
+
+        _memoryCache.Set(cacheKey, flights, TimeSpan.FromMinutes(10)); // Cache for 10 minutes
+
+        return flights;
     }
 
     public async Task<decimal> GetFlightSpeedAsync(int flightId)
     {
-        return await context.Flights
+        var cacheKey = $"flightspeed_{flightId}";
+        if (_memoryCache.TryGetValue(cacheKey, out decimal cachedSpeed))
+        {
+            return cachedSpeed;
+        }
+
+        var speed = await context.Flights
             .Where(f => f.Id == flightId)
             .Select(f => f.Speed)
             .FirstAsync();
+
+        _memoryCache.Set(cacheKey, speed, TimeSpan.FromMinutes(10)); // Cache for 10 minutes
+
+        return speed;
     }
 
     /// <summary>
@@ -59,7 +80,13 @@ public class TravelRepo(TravelDbContext context)
 
     public async Task<UserInfoDto[]> GetUsersByCountry(string country)
     {
-        return (await context.Users
+        var cacheKey = $"usersbycountry_{country}";
+        if (_memoryCache.TryGetValue(cacheKey, out UserInfoDto[] cachedUsers))
+        {
+            return cachedUsers;
+        }
+
+        var users = (await context.Users
             .Where(u => u.Country == country)
             .Select(u => new UserInfoDto
             {
@@ -67,6 +94,10 @@ public class TravelRepo(TravelDbContext context)
                 Email = u.Email,
             })
             .ToListAsync()).ToArray();
+
+        _memoryCache.Set(cacheKey, users, TimeSpan.FromHours(1)); // Cache for 1 hour
+
+        return users;
     }
 
     public async Task<bool> UpdateUserInfo(int userId, string name, string email)
@@ -80,6 +111,10 @@ public class TravelRepo(TravelDbContext context)
             user.Name = name;
             user.Email = email;
             var rowsEffected = await context.SaveChangesAsync();
+
+            // Invalidate cache for user info
+            _memoryCache.Remove($"usersbycountry_{user.Country}");
+
             return rowsEffected > 0;
         }
 

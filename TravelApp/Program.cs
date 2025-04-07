@@ -13,6 +13,10 @@ builder.Services.AddDbContext<TravelDbContext>(o =>
     o.UseSqlite(TravelDbContext.DbPath);
 });
 
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<TravelRepo>();
+
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
