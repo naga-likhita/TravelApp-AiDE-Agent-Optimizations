@@ -1,6 +1,7 @@
 ﻿using TravelApp.Entities;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace TravelApp;
 
@@ -8,7 +9,7 @@ public class AnalyticsService
 {
     public List<string> GetTop5Destinations()
     {
-        var bookings = TravelDbContext.Instance.Bookings.ToList();
+        var bookings = TravelDbContext.Instance.Bookings.Include(b => b.Flight).ToList();
         // Step 1: Count occurrences using a dictionary
         var destinationCounts = new Dictionary<string, int>();
 
