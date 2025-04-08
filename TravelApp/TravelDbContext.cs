@@ -37,15 +37,10 @@ public class TravelDbContext : DbContext
     public void MockDynamic()
     {
         var isNewlyCreated = Database.EnsureCreated();
-        if (isNewlyCreated is false)
-            throw new Exception("DB Already mocked!!");
 
-        var users = JsonSerializer.Deserialize<User[]>(File.ReadAllText("Mock/Users.json"));
-        Users.AddRange(users);
-        SaveChanges();
-
-        Mocker.MockFlights(this);
-        Mocker.MockBookings(this);
+        //this.MockUsers(1_00_000);
+        //this.MockFlights(10_000);
+        //this.MockBookings(5_00_000);
     }
     public void Import()
     {

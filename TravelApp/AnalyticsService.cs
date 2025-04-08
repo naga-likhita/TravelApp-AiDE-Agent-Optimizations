@@ -4,8 +4,9 @@ namespace TravelApp;
 
 public class AnalyticsService
 {
-    public List<string> GetTop5Destinations(List<Booking> bookings)
+    public List<string> GetTop5Destinations()
     {
+        var bookings = TravelDbContext.Instance.Bookings.ToList();
         var destinations = new List<string>();
 
         foreach (var booking in bookings)

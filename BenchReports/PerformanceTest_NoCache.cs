@@ -7,7 +7,7 @@ namespace BenchReports;
 
 
 [MemoryDiagnoser]
-public class PerformanceTests
+public class PerformanceTest_NoCache
 {
     [Benchmark]
     public async Task<List<Flight>> GetFlights()
@@ -75,5 +75,11 @@ public class PerformanceTests
     public async Task ReminderUsersAsync()
     {
         await new NotificationService().ReminderUsersAsync();
+    }
+
+    [Benchmark]
+    public List<string> GetTop5Destinations()
+    {
+        return new AnalyticsService().GetTop5Destinations();
     }
 }
