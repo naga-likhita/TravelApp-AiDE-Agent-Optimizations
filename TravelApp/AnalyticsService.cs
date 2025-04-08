@@ -1,4 +1,4 @@
-﻿using TravelApp.Entities;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace TravelApp;
 
@@ -6,7 +6,7 @@ public class AnalyticsService
 {
     public List<string> GetTop5Destinations()
     {
-        var bookings = TravelDbContext.Instance.Bookings.ToList();
+        var bookings = TravelDbContext.Instance.Bookings.Include(b => b.Flight).ToList();
         var destinations = new List<string>();
 
         foreach (var booking in bookings)
