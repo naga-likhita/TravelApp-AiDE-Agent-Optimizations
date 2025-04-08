@@ -11,6 +11,7 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.WithCorrelationId()
     .WriteTo.Console(new CompactJsonFormatter())
     .CreateLogger();
+TravelDbContext.Instance.MockDynamic();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();

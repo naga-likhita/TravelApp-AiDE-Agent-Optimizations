@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Microsoft.Extensions.Caching.Memory;
 using TravelApp;
 using TravelApp.DTOs;
 using TravelApp.Entities;
@@ -7,8 +8,15 @@ namespace BenchReports;
 
 
 [MemoryDiagnoser]
-public class PerformanceTests
+public class PerformanceTest_NoCache
 {
+    [GlobalSetup]
+    public virtual async Task Setup()
+    {
+        Console.WriteLine("Dummy cache setup");
+        TravelRepo._cache = new DummyCache();
+    }
+
     [Benchmark]
     public async Task<List<Flight>> GetFlights()
     {
@@ -22,7 +30,7 @@ public class PerformanceTests
     }
 
     [Benchmark]
-    public async Task<List<Booking>> GetBookings()
+    public async Task<(List<Booking> Results, int TotalCount, int TotalPages)> GetBookings()
     {
         return await TravelRepo.Instance.GetBookings();
     }
@@ -60,20 +68,26 @@ public class PerformanceTests
     [Benchmark]
     public async Task SendNotification()
     {
-        var user = new User()
+        var user = new NotificationUserDto()
         {
             Email = "Likhita@test.com",
             PhoneNumber = "9011112222",
             Id = 1,
         };
 
-        var resp = await new NotificationService()
+        var resp = await new NotificationService(new MemoryCache(new MemoryCacheOptions()))
             .SendNotificationAsync(user, "Hi [UserName], this is a reminder for your upcoming flight from [Departure] to [Destination] on [BookingDate] at [DepartureTime]. \r\nPlease arrive at the airport at least 2 hours before departure. \r\nThank you for choosing [AirlineName]! Safe travels! ✈️\r\n");
     }
 
     [Benchmark]
     public async Task ReminderUsersAsync()
     {
-        await new NotificationService().ReminderUsersAsync();
+        await new NotificationService(new MemoryCache(new MemoryCacheOptions())).ReminderUsersAsync();
+    }
+
+    [Benchmark]
+    public List<string> GetTop5Destinations()
+    {
+        return new AnalyticsService().GetTop5Destinations();
     }
 }

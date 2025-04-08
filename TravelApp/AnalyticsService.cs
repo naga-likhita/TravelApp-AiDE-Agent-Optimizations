@@ -6,8 +6,9 @@ namespace TravelApp;
 
 public class AnalyticsService
 {
-    public List<string> GetTop5Destinations(List<Booking> bookings)
+    public List<string> GetTop5Destinations()
     {
+        var bookings = TravelDbContext.Instance.Bookings.ToList();
         // Step 1: Count occurrences using a dictionary
         var destinationCounts = new Dictionary<string, int>();
 

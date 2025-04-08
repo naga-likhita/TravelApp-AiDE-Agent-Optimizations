@@ -36,6 +36,7 @@ public class NotificationService
 
         var bookings = await TravelDbContext.Instance.Bookings
             .Where(b => b.TravelDate == topTravelDate)
+            .Take(1000)
             .Select(b => new
             {
                 User = new NotificationUserDto

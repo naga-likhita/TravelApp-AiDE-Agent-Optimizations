@@ -5,11 +5,11 @@ using TravelApp.Entities;
 
 namespace TravelApp;
 
-public class TravelRepo(TravelDbContext context, IMemoryCache cache)
+public class TravelRepo(TravelDbContext context)
 {
-    private readonly IMemoryCache _cache = cache;
+    public static IMemoryCache _cache;
     private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(10);
-    public static TravelRepo Instance => new(TravelDbContext.Instance, new MemoryCache(new MemoryCacheOptions()));
+    public static TravelRepo Instance => new(TravelDbContext.Instance);
 
     /// <summary>
     /// This API used too frequently to get list of flights
