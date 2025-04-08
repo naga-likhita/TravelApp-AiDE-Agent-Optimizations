@@ -31,12 +31,6 @@ var app = builder.Build();
 // Add correlation middleware
 app.UseMiddleware<CorrelationIdMiddleware>();
 
-// Initialize database using DI
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<TravelDbContext>();
-    context.Import();
-}
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
