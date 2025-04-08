@@ -10,6 +10,9 @@ namespace BenchReports
         {
             Console.WriteLine("In memory cache setting up...");
             TravelRepo._cache = new MemoryCache(new MemoryCacheOptions());
+
+            userEmail = TravelDbContext.Instance.Users.OrderByDescending(u => u.Bookings.Count()).First().Email;
+
             await GetFlights();
             await GetBookings();
             await GetBookingsForUser();

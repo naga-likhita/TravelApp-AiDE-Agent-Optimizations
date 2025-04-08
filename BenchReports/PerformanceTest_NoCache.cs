@@ -10,7 +10,7 @@ namespace BenchReports;
 [MemoryDiagnoser]
 public class PerformanceTest_NoCache
 {
-    string userEmail;
+    protected string userEmail;
     [GlobalSetup]
     public virtual async Task Setup()
     {
