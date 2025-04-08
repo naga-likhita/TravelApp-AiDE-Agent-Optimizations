@@ -11,11 +11,13 @@ namespace BenchReports;
 public class PerformanceTest_NoCache
 {
     protected string userEmail;
+    protected IMemoryCache _cache;
     [GlobalSetup]
     public virtual async Task Setup()
     {
         Console.WriteLine("Dummy cache setup");
-        TravelRepo._cache = new DummyCache();
+        _cache = new DummyCache();
+        TravelRepo._cache = _cache;
         userEmail = TravelDbContext.Instance.Users.OrderByDescending(u => u.Bookings.Count()).First().Email;
     }
 
@@ -77,14 +79,14 @@ public class PerformanceTest_NoCache
             Id = 1,
         };
 
-        var resp = await new NotificationService(new MemoryCache(new MemoryCacheOptions()))
+        var resp = await new NotificationService(_cache)
             .SendNotificationAsync(user, "Hi [UserName], this is a reminder for your upcoming flight from [Departure] to [Destination] on [BookingDate] at [DepartureTime]. \r\nPlease arrive at the airport at least 2 hours before departure. \r\nThank you for choosing [AirlineName]! Safe travels! ✈️\r\n");
     }
 
     [Benchmark]
     public async Task ReminderUsersAsync()
     {
-        await new NotificationService(new MemoryCache(new MemoryCacheOptions())).ReminderUsersAsync();
+        await new NotificationService(_cache).ReminderUsersAsync();
     }
 
     [Benchmark]

@@ -9,8 +9,8 @@ namespace BenchReports
         public override async Task Setup()
         {
             Console.WriteLine("In memory cache setting up...");
-            TravelRepo._cache = new MemoryCache(new MemoryCacheOptions());
-
+            _cache = new MemoryCache(new MemoryCacheOptions());
+            TravelRepo._cache = _cache;
             userEmail = TravelDbContext.Instance.Users.OrderByDescending(u => u.Bookings.Count()).First().Email;
 
             await GetFlights();
