@@ -9,6 +9,14 @@ namespace BenchReports;
 [MemoryDiagnoser]
 public class PerformanceTest_NoCache
 {
+    string userEmail;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        userEmail = TravelDbContext.Instance.Users.OrderByDescending(u=>u.Bookings.Count()).First().Email;
+    }
+
     [Benchmark]
     public async Task<List<Flight>> GetFlights()
     {
@@ -30,19 +38,19 @@ public class PerformanceTest_NoCache
     [Benchmark]
     public async Task<List<Booking>> GetBookingsForUser()
     {
-        return await TravelRepo.Instance.GetBookingsForUser("myra.jain@mail.com");
+        return await TravelRepo.Instance.GetBookingsForUser(userEmail);
     }
 
     [Benchmark]
     public async Task<UserInfoDto> GetUserInfoByEmail()
     {
-        return await TravelRepo.Instance.GetUserInfoByEmail("navya.gupta@mail.com");
+        return await TravelRepo.Instance.GetUserInfoByEmail(userEmail);
     }
 
     [Benchmark]
     public async Task<UserInfoDto[]> GetUsersByCountry()
     {
-        return await TravelRepo.Instance.GetUsersByCountry("India");
+        return await TravelRepo.Instance.GetUsersByCountry("Singapore");
     }
 
     [Benchmark]

@@ -120,8 +120,8 @@ public static class Mocker
 
             var booking = new Booking
             {
-                UserId = random.Next(1,usersCount),
-                FlightId = random.Next(1,flightsCount),
+                UserId = random.Next(1, usersCount),
+                FlightId = random.Next(1, flightsCount),
                 TravelDate = DateOnly.FromDateTime(travelDate),
                 BookingDate = DateOnly.FromDateTime(bookingDate),
                 Status = status
@@ -190,20 +190,17 @@ public static class Mocker
     }
     static string GenerateEmail(string userName, int id)
     {
-        // Ensure the ID is a 2-digit number
-        int twoDigitId = id % 90 + 10; // This will ensure the ID is between 10 and 99
-
         // List of valid email domains (Indian and some common domains)
         string[] domains = {
         "gmail.com", "yahoo.co.in", "outlook.com", "rediffmail.com", "indiatimes.com", "airtelmail.com"
-    };
+        };
 
         // Choose a random domain from the list
         var random = new Random();
         string domain = domains[random.Next(domains.Length)];
 
         // Generate email address by appending id to username
-        string email = $"{userName.ToLower()}.{twoDigitId}@{domain}";
+        string email = $"{userName.ToLower()}.{id}@{domain}";
 
         return email;
     }
