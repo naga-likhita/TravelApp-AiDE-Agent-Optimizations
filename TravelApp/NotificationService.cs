@@ -26,6 +26,7 @@ public class NotificationService
             .Include(b => b.User)
             .Include(b => b.Flight)
             .Where(b => b.TravelDate == topBookingDate.TravelDate)
+            .Take(1000)
             .ToListAsync();
 
         foreach (var booking in bookings)
